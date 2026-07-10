@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#131313"/>
+  <path d="M256 64 L416 120 V264 C416 360 344 424 256 456 C168 424 96 360 96 264 V120 Z" fill="#20201f" stroke="#4b5332" stroke-width="12"/>
+  <path d="M256 96 L388 142 V262 C388 342 328 396 256 424 C184 396 124 342 124 262 V142 Z" fill="none" stroke="#eac34a" stroke-width="6"/>
+  <path d="M256 150 L272 210 L334 210 L284 248 L302 308 L256 272 L210 308 L228 248 L178 210 L240 210 Z" fill="#eac34a"/>
+  <text x="256" y="392" font-family="Georgia, serif" font-size="52" font-weight="700" fill="#eac34a" text-anchor="middle">TS</text>
+</svg>

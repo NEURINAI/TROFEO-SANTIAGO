@@ -1,0 +1,24 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: trofeo-santiago
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Base de datos SQLite persistida en el volumen "trofeo-db".
+      DATABASE_URL: "file:/app/data/dev.db"
+      # ¡Cambia este secreto en producción!
+      JWT_SECRET: "${JWT_SECRET:-cambia-este-secreto-en-produccion}"
+      NEXT_PUBLIC_SITE_URL: "${NEXT_PUBLIC_SITE_URL:-http://localhost:3000}"
+    volumes:
+      - trofeo-db:/app/data
+      - trofeo-images:/app/public/images
+      - trofeo-uploads:/app/public/uploads
+
+volumes:
+  trofeo-db:
+  trofeo-images:
+  trofeo-uploads:

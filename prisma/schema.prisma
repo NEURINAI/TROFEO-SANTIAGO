@@ -1,0 +1,152 @@
+// Esquema Prisma — Trofeo de Santiago
+// Base de datos SQLite. Arquitectura preparada para migrar a PostgreSQL
+// (basta cambiar `provider` y `DATABASE_URL`; no se usan tipos exclusivos de SQLite).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Activity {
+  id          Int      @id @default(autoincrement())
+  time        String
+  date        String
+  name        String
+  location    String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Team {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique
+  totalPoints    Int              @default(0) // Calculado automáticamente (ver lib/standings.js)
+  manualAdjust   Int              @default(0) // Ajuste manual del administrador
+  observations   String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  crossResults   CrossResult[]
+  volleyMatchA   VolleyMatch[]    @relation("TeamA")
+  volleyMatchB   VolleyMatch[]    @relation("TeamB")
+  crossfitResult CrossfitResult?
+  paellaResult   PaellaResult?
+  psPlayers      PsPlayer[]
+}
+
+model CrossResult {
+  id             Int      @id @default(autoincrement())
+  teamId         Int
+  team           Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  individualName String?
+  time           String?
+  points         Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model VolleyMatch {
+  id            Int      @id @default(autoincrement())
+  round         Int      @default(1) // Ronda del cuadro (1 = primera, mayor = final)
+  slot          Int      @default(0) // Posición dentro de la ronda
+  teamAId       Int?
+  teamA         Team?    @relation("TeamA", fields: [teamAId], references: [id])
+  teamBId       Int?
+  teamB         Team?    @relation("TeamB", fields: [teamBId], references: [id])
+  result        String? // p. ej. "2-1"
+  teamAPoints   Int      @default(0)
+  teamBPoints   Int      @default(0)
+  status        String   @default("Pendiente") // Pendiente | EnJuego | Finalizado
+  scheduledDate String?
+  scheduledTime String?
+  field         String?
+  winnerId      Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model CrossfitResult {
+  id        Int      @id @default(autoincrement())
+  teamId    Int      @unique
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  time      String?
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PaellaResult {
+  id           Int      @id @default(autoincrement())
+  teamId       Int      @unique
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  sabor        Int      @default(0)
+  puntoArroz   Int      @default(0)
+  presentacion Int      @default(0)
+  color        Int      @default(0)
+  totalPoints  Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// --- Torneo PlayStation EA SPORTS FC ---
+
+model PsPlayer {
+  id        Int       @id @default(autoincrement())
+  name      String
+  teamId    Int?
+  team      Team?     @relation(fields: [teamId], references: [id])
+  militaryUnit String? // Texto libre por si no está ligado a un equipo
+  wins      Int       @default(0)
+  losses    Int       @default(0)
+  points    Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  matchesA  PsMatch[] @relation("PsPlayerA")
+  matchesB  PsMatch[] @relation("PsPlayerB")
+}
+
+model PsMatch {
+  id            Int       @id @default(autoincrement())
+  round         Int       @default(1)
+  slot          Int       @default(0)
+  playerAId     Int?
+  playerA       PsPlayer? @relation("PsPlayerA", fields: [playerAId], references: [id])
+  playerBId     Int?
+  playerB       PsPlayer? @relation("PsPlayerB", fields: [playerBId], references: [id])
+  scoreA        Int?
+  scoreB        Int?
+  status        String    @default("Pendiente") // Pendiente | EnJuego | Finalizado
+  scheduledTime String?
+  winnerId      Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// --- Medios gestionados desde el admin (cartel, cabeceras, PDFs de normas) ---
+
+model MediaAsset {
+  key       String   @id // p. ej. cartel, header-cross, norma-cross
+  path      String
+  type      String   @default("image") // image | pdf
+  label     String?
+  updatedAt DateTime @updatedAt
+}
+
+// Configuración clave/valor genérica
+model Config {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

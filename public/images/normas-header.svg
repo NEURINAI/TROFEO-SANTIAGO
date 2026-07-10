@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400">
+  <defs>
+    <linearGradient id="g6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4b5d3a"/>
+      <stop offset="100%" stop-color="#d8c8a5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="400" fill="url(#g6)" />
+  <rect x="420" y="100" width="360" height="220" fill="#fff" rx="20" />
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#2f3e2e" font-family="Inter, sans-serif" font-size="56">Normas Oficiales</text>
+</svg>

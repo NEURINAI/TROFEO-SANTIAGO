@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d8c8a5"/>
+      <stop offset="100%" stop-color="#4b5d3a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="400" fill="url(#g2)" />
+  <path d="M200 320 l120 -180 l80 40 l80 -120 l120 200" fill="none" stroke="#2f3e2e" stroke-width="18" stroke-linecap="round"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#2f3e2e" font-family="Inter, sans-serif" font-size="56">Cross Militar</text>
+</svg>
