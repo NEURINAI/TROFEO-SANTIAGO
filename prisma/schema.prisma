@@ -21,10 +21,11 @@ model Admin {
 
 model Activity {
   id          Int      @id @default(autoincrement())
-  time        String
-  date        String
+  date        String // fecha de inicio (YYYY-MM-DD)
+  endDate     String? // fecha de fin, opcional (para competiciones de varios días)
+  time        String? // opcional
   name        String
-  location    String
+  location    String? // opcional
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

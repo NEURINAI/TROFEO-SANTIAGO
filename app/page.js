@@ -13,6 +13,16 @@ function formatFecha(iso) {
   return { dia: m[3], mes: MESES[Number(m[2]) - 1] || "" };
 }
 
+// Texto del periodo cuando la actividad dura varios días (o null si es de un día).
+function formatPeriodo(date, endDate) {
+  if (!endDate || endDate === date) return null;
+  const a = formatFecha(date);
+  const b = formatFecha(endDate);
+  return a.mes === b.mes
+    ? `Del ${a.dia} al ${b.dia} de ${b.mes}.`
+    : `Del ${a.dia} ${a.mes}. al ${b.dia} ${b.mes}.`;
+}
+
 export default async function Home() {
   const [activities, cartel] = await Promise.all([
     prisma.activity.findMany({ orderBy: [{ date: "asc" }, { time: "asc" }] }),
@@ -82,6 +92,7 @@ export default async function Home() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {activities.map((act) => {
               const { dia, mes } = formatFecha(act.date);
+              const periodo = formatPeriodo(act.date, act.endDate);
               return (
                 <article
                   key={act.id}
@@ -95,14 +106,24 @@ export default async function Home() {
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-display text-lg font-semibold text-on-surface">{act.name}</h3>
-                      <p className="data-mono mt-1 flex items-center gap-1 text-sm text-secondary">
-                        <span className="material-symbols-outlined text-[16px]">schedule</span>
-                        {act.time}
-                      </p>
-                      <p className="mt-1 flex items-center gap-1 text-sm text-on-surface-variant">
-                        <span className="material-symbols-outlined text-[16px]">location_on</span>
-                        {act.location}
-                      </p>
+                      {periodo && (
+                        <p className="mt-1 flex items-center gap-1 text-sm text-tertiary">
+                          <span className="material-symbols-outlined text-[16px]">date_range</span>
+                          {periodo}
+                        </p>
+                      )}
+                      {act.time && (
+                        <p className="data-mono mt-1 flex items-center gap-1 text-sm text-secondary">
+                          <span className="material-symbols-outlined text-[16px]">schedule</span>
+                          {act.time}
+                        </p>
+                      )}
+                      {act.location && (
+                        <p className="mt-1 flex items-center gap-1 text-sm text-on-surface-variant">
+                          <span className="material-symbols-outlined text-[16px]">location_on</span>
+                          {act.location}
+                        </p>
+                      )}
                     </div>
                   </div>
                   {act.description && (
