@@ -40,7 +40,7 @@ export default async function Home() {
                 className="inline-flex items-center gap-2 border-2 border-tertiary bg-tertiary px-6 py-3 text-on-tertiary transition-colors hover:bg-tertiary-container"
               >
                 <span className="material-symbols-outlined text-[20px]">emoji_events</span>
-                <span className="label-caps">Ver Competiciones</span>
+                <span className="label-caps">Ver Clasificación General</span>
               </Link>
               <Link
                 href="/normas"
