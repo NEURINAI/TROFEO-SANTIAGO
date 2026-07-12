@@ -6,8 +6,8 @@ import ResultsTable from "@/components/ResultsTable";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Desafío CrossFit",
-  description: "Clasificación por equipos del desafío CrossFit del Trofeo de Santiago.",
+  title: "Desafío Pezuela",
+  description: "Clasificación por equipos del Desafío Pezuela del Trofeo de Santiago.",
 };
 
 export default async function CrossfitPage() {
@@ -28,7 +28,7 @@ export default async function CrossfitPage() {
       <PageHeader
         mediaKey="header-crossfit"
         eyebrow="Fuerza y Resistencia"
-        title="Desafío CrossFit"
+        title="Desafío Pezuela"
         subtitle="Pruebas funcionales por equipos. Clasificación según tiempo y puntos."
       />
 
