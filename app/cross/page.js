@@ -6,8 +6,9 @@ import ResultsTable from "@/components/ResultsTable";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Competición de Cross",
-  description: "Clasificación individual y por equipos de la carrera de Cross del Trofeo de Santiago.",
+  title: "Cross Cabo Baena 5k",
+  description:
+    "En recuerdo del cabo Mallo Baena. Fallecido durante un lanzamiento paracaidista nocturno de apertura manual realizado en Huesca, mientras participaba en el ejercicio Tormenta Alada 2026.",
 };
 
 export default async function CrossPage() {
@@ -38,8 +39,8 @@ export default async function CrossPage() {
       <PageHeader
         mediaKey="header-cross"
         eyebrow="Prueba de Resistencia"
-        title="Competición de Cross"
-        subtitle="Carrera a campo través. Clasificación individual y por equipos."
+        title="Cross Cabo Baena 5k"
+        subtitle="En recuerdo del cabo Mallo Baena. Fallecido durante un lanzamiento paracaidista nocturno de apertura manual realizado en Huesca, mientras participaba en el ejercicio Tormenta Alada 2026."
       />
 
       <div className="mx-auto max-w-[1280px] space-y-12 px-6 py-12 md:px-12">
