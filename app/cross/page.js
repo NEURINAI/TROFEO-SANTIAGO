@@ -6,9 +6,9 @@ import ResultsTable from "@/components/ResultsTable";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Cross Cabo Baena 5k",
+  title: "Cross Cabo Edgar Mallo Baena 5k",
   description:
-    "En recuerdo del cabo Mallo Baena. Fallecido durante un lanzamiento paracaidista nocturno de apertura manual realizado en Huesca, mientras participaba en el ejercicio Tormenta Alada 2026.",
+    "En recuerdo del cabo Edgar Mallo Baena. Fallecido durante un lanzamiento paracaidista nocturno de apertura manual realizado en Huesca, mientras participaba en el ejercicio Tormenta Alada 2026.",
 };
 
 export default async function CrossPage() {
@@ -39,8 +39,8 @@ export default async function CrossPage() {
       <PageHeader
         mediaKey="header-cross"
         eyebrow="Prueba de Resistencia"
-        title="Cross Cabo Baena 5k"
-        subtitle="En recuerdo del cabo Mallo Baena. Fallecido durante un lanzamiento paracaidista nocturno de apertura manual realizado en Huesca, mientras participaba en el ejercicio Tormenta Alada 2026."
+        title="Cross Cabo Edgar Mallo Baena 5k"
+        subtitle="En recuerdo del cabo Edgar Mallo Baena. Fallecido durante un lanzamiento paracaidista nocturno de apertura manual realizado en Huesca, mientras participaba en el ejercicio Tormenta Alada 2026."
       />
 
       <div className="mx-auto max-w-[1280px] space-y-12 px-6 py-12 md:px-12">
