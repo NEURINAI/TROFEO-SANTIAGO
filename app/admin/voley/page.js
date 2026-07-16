@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { recomputeTeamTotals } from "@/lib/standings";
 import AdminPageTitle from "@/components/AdminPageTitle";
 import ConfirmButton from "@/components/ConfirmButton";
 import * as s from "@/lib/adminStyles";
@@ -12,36 +11,26 @@ const ESTADOS = ["Pendiente", "EnJuego", "Finalizado"];
 function revalidateAll() {
   revalidatePath("/admin/voley");
   revalidatePath("/voley");
-  revalidatePath("/clasificacion");
-  revalidatePath("/");
 }
 
 function parseMatch(formData) {
-  const num = (k) => {
-    const v = formData.get(k);
-    return v === "" || v === null ? null : Number(v);
-  };
   return {
     round: Number(formData.get("round")) || 1,
     slot: Number(formData.get("slot")) || 0,
-    teamAId: num("teamAId"),
-    teamBId: num("teamBId"),
+    teamAName: formData.get("teamAName")?.trim() || null,
+    teamBName: formData.get("teamBName")?.trim() || null,
     result: formData.get("result")?.trim() || null,
-    teamAPoints: Number(formData.get("teamAPoints")) || 0,
-    teamBPoints: Number(formData.get("teamBPoints")) || 0,
     status: formData.get("status") || "Pendiente",
     scheduledDate: formData.get("scheduledDate") || null,
     scheduledTime: formData.get("scheduledTime") || null,
     field: formData.get("field")?.trim() || null,
-    winnerId: num("winnerId"),
+    winnerName: formData.get("winnerName")?.trim() || null,
   };
 }
 
 async function addMatch(formData) {
   "use server";
-  const data = parseMatch(formData);
-  await prisma.volleyMatch.create({ data });
-  await recomputeTeamTotals();
+  await prisma.volleyMatch.create({ data: parseMatch(formData) });
   revalidateAll();
 }
 
@@ -49,9 +38,7 @@ async function updateMatch(formData) {
   "use server";
   const id = Number(formData.get("id"));
   if (!id) return;
-  const data = parseMatch(formData);
-  await prisma.volleyMatch.update({ where: { id }, data });
-  await recomputeTeamTotals();
+  await prisma.volleyMatch.update({ where: { id }, data: parseMatch(formData) });
   revalidateAll();
 }
 
@@ -60,23 +47,11 @@ async function deleteMatch(formData) {
   const id = Number(formData.get("id"));
   if (id) {
     await prisma.volleyMatch.delete({ where: { id } });
-    await recomputeTeamTotals();
     revalidateAll();
   }
 }
 
-function TeamSelect({ name, teams, defaultValue, placeholder }) {
-  return (
-    <select name={name} defaultValue={defaultValue ?? ""} className={s.input}>
-      <option value="">{placeholder}</option>
-      {teams.map((t) => (
-        <option key={t.id} value={t.id}>{t.name}</option>
-      ))}
-    </select>
-  );
-}
-
-function MatchFields({ teams, m }) {
+function MatchFields({ m }) {
   return (
     <>
       <div className="grid gap-3 md:grid-cols-4">
@@ -102,29 +77,21 @@ function MatchFields({ teams, m }) {
       <div className="grid gap-3 md:grid-cols-2">
         <div>
           <label className={s.label}>Equipo A</label>
-          <TeamSelect name="teamAId" teams={teams} defaultValue={m?.teamAId} placeholder="Por definir" />
+          <input name="teamAName" defaultValue={m?.teamAName ?? ""} placeholder="Nombre del equipo" className={s.input} />
         </div>
         <div>
           <label className={s.label}>Equipo B</label>
-          <TeamSelect name="teamBId" teams={teams} defaultValue={m?.teamBId} placeholder="Por definir" />
+          <input name="teamBName" defaultValue={m?.teamBName ?? ""} placeholder="Nombre del equipo" className={s.input} />
         </div>
       </div>
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-2">
         <div>
           <label className={s.label}>Resultado (sets)</label>
           <input name="result" placeholder="2-1" defaultValue={m?.result ?? ""} className={s.input} />
         </div>
         <div>
-          <label className={s.label}>Puntos A</label>
-          <input name="teamAPoints" type="number" defaultValue={m?.teamAPoints ?? 0} className={s.input} />
-        </div>
-        <div>
-          <label className={s.label}>Puntos B</label>
-          <input name="teamBPoints" type="number" defaultValue={m?.teamBPoints ?? 0} className={s.input} />
-        </div>
-        <div>
-          <label className={s.label}>Ganador</label>
-          <TeamSelect name="winnerId" teams={teams} defaultValue={m?.winnerId} placeholder="Sin definir" />
+          <label className={s.label}>Ganador (nombre)</label>
+          <input name="winnerName" defaultValue={m?.winnerName ?? ""} placeholder="Equipo ganador" className={s.input} />
         </div>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -142,20 +109,16 @@ function MatchFields({ teams, m }) {
 }
 
 export default async function AdminVoley() {
-  const [teams, matches] = await Promise.all([
-    prisma.team.findMany({ orderBy: { name: "asc" } }),
-    prisma.volleyMatch.findMany({
-      include: { teamA: true, teamB: true },
-      orderBy: [{ round: "asc" }, { slot: "asc" }],
-    }),
-  ]);
+  const matches = await prisma.volleyMatch.findMany({
+    orderBy: [{ round: "asc" }, { slot: "asc" }],
+  });
 
   return (
     <div>
       <AdminPageTitle
         icon="sports_volleyball"
         title="Gestión de Vóley"
-        description="Define el cuadro eliminatorio: rondas, enfrentamientos, horarios, campos y resultados."
+        description="Define el cuadro eliminatorio escribiendo los nombres de los equipos a mano. Los puntos de esta competición se ponen manualmente en la Clasificación General (Ajuste manual de cada equipo)."
       />
 
       <details className="mb-8">
@@ -164,7 +127,7 @@ export default async function AdminVoley() {
           <span className="label-caps">Nuevo Enfrentamiento</span>
         </summary>
         <form action={addMatch} className={`${s.panelPad} mt-3 space-y-3`}>
-          <MatchFields teams={teams} m={null} />
+          <MatchFields m={null} />
           <button type="submit" className={s.btnPrimary}>
             <span className="material-symbols-outlined text-[20px]">save</span>
             <span className="label-caps">Crear Enfrentamiento</span>
@@ -180,13 +143,13 @@ export default async function AdminVoley() {
                 Ronda {m.round} · Enc. {String(m.slot + 1).padStart(2, "0")}
               </span>
               <span className="text-sm text-on-surface">
-                {m.teamA?.name || "Por definir"} <span className="text-on-surface-variant">vs</span> {m.teamB?.name || "Por definir"}
+                {m.teamAName || "Por definir"} <span className="text-on-surface-variant">vs</span> {m.teamBName || "Por definir"}
               </span>
             </div>
             <form action={updateMatch} className="space-y-3">
               <input type="hidden" name="id" value={m.id} />
-              <MatchFields teams={teams} m={m} />
-              <div className="flex items-center justify-between border-t border-outline-variant pt-3">
+              <MatchFields m={m} />
+              <div className="border-t border-outline-variant pt-3">
                 <button type="submit" className={s.btnAccent}>
                   <span className="material-symbols-outlined text-[18px]">save</span>
                   <span className="label-caps">Actualizar</span>

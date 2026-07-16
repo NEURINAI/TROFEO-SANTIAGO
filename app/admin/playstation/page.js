@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { recomputeTeamTotals } from "@/lib/standings";
-import { recomputePsStats, advanceWinner } from "@/lib/ps";
+import { advanceWinner } from "@/lib/ps";
 import AdminPageTitle from "@/components/AdminPageTitle";
 import ConfirmButton from "@/components/ConfirmButton";
 import * as s from "@/lib/adminStyles";
@@ -13,24 +12,18 @@ const ESTADOS = ["Pendiente", "EnJuego", "Finalizado"];
 function revalidateAll() {
   revalidatePath("/admin/playstation");
   revalidatePath("/playstation");
-  revalidatePath("/clasificacion");
-  revalidatePath("/");
 }
 
-async function refreshStats() {
-  await recomputePsStats();
-  await recomputeTeamTotals();
-  revalidateAll();
-}
-
-// --- Participantes ---
+// --- Participantes (clasificación manual) ---
 async function addPlayer(formData) {
   "use server";
   const name = formData.get("name")?.trim();
-  const teamId = formData.get("teamId") ? Number(formData.get("teamId")) : null;
+  const militaryUnit = formData.get("militaryUnit")?.trim() || null;
+  const wins = Number(formData.get("wins")) || 0;
+  const losses = Number(formData.get("losses")) || 0;
   if (name) {
-    await prisma.psPlayer.create({ data: { name, teamId } });
-    await refreshStats();
+    await prisma.psPlayer.create({ data: { name, militaryUnit, wins, losses } });
+    revalidateAll();
   }
 }
 
@@ -38,10 +31,12 @@ async function updatePlayer(formData) {
   "use server";
   const id = Number(formData.get("id"));
   const name = formData.get("name")?.trim();
-  const teamId = formData.get("teamId") ? Number(formData.get("teamId")) : null;
+  const militaryUnit = formData.get("militaryUnit")?.trim() || null;
+  const wins = Number(formData.get("wins")) || 0;
+  const losses = Number(formData.get("losses")) || 0;
   if (id && name) {
-    await prisma.psPlayer.update({ where: { id }, data: { name, teamId } });
-    await refreshStats();
+    await prisma.psPlayer.update({ where: { id }, data: { name, militaryUnit, wins, losses } });
+    revalidateAll();
   }
 }
 
@@ -49,23 +44,34 @@ async function deletePlayer(formData) {
   "use server";
   const id = Number(formData.get("id"));
   if (id) {
-    await prisma.psMatch.updateMany({ where: { playerAId: id }, data: { playerAId: null } });
-    await prisma.psMatch.updateMany({ where: { playerBId: id }, data: { playerBId: null } });
-    await prisma.psMatch.updateMany({ where: { winnerId: id }, data: { winnerId: null, status: "Pendiente" } });
     await prisma.psPlayer.delete({ where: { id } });
-    await refreshStats();
+    revalidateAll();
   }
 }
 
-// --- Partidos ---
+// --- Enfrentamientos (nombres a mano) ---
+function parseMatch(formData) {
+  const playerAName = formData.get("playerAName")?.trim() || null;
+  const playerBName = formData.get("playerBName")?.trim() || null;
+  const scoreA = formData.get("scoreA") !== "" ? Number(formData.get("scoreA")) : null;
+  const scoreB = formData.get("scoreB") !== "" ? Number(formData.get("scoreB")) : null;
+  const status = formData.get("status") || "Pendiente";
+  const scheduledTime = formData.get("scheduledTime") || null;
+
+  // Ganador automático si está finalizado y hay marcador.
+  let winnerName = null;
+  if (status === "Finalizado" && scoreA !== null && scoreB !== null) {
+    winnerName = scoreA > scoreB ? playerAName : scoreB > scoreA ? playerBName : null;
+  }
+  return { playerAName, playerBName, scoreA, scoreB, status, scheduledTime, winnerName };
+}
+
 async function addMatch(formData) {
   "use server";
   const round = Number(formData.get("round")) || 1;
   const slot = Number(formData.get("slot")) || 0;
-  const playerAId = formData.get("playerAId") ? Number(formData.get("playerAId")) : null;
-  const playerBId = formData.get("playerBId") ? Number(formData.get("playerBId")) : null;
-  const scheduledTime = formData.get("scheduledTime") || null;
-  await prisma.psMatch.create({ data: { round, slot, playerAId, playerBId, scheduledTime } });
+  const created = await prisma.psMatch.create({ data: { round, slot, ...parseMatch(formData) } });
+  await advanceWinner(created);
   revalidateAll();
 }
 
@@ -73,27 +79,14 @@ async function updateMatch(formData) {
   "use server";
   const id = Number(formData.get("id"));
   if (!id) return;
-  const playerAId = formData.get("playerAId") ? Number(formData.get("playerAId")) : null;
-  const playerBId = formData.get("playerBId") ? Number(formData.get("playerBId")) : null;
-  const scoreA = formData.get("scoreA") !== "" ? Number(formData.get("scoreA")) : null;
-  const scoreB = formData.get("scoreB") !== "" ? Number(formData.get("scoreB")) : null;
-  const status = formData.get("status") || "Pendiente";
-  const scheduledTime = formData.get("scheduledTime") || null;
-
-  // Determinar ganador automáticamente si el partido está finalizado.
-  let winnerId = null;
-  if (status === "Finalizado" && scoreA !== null && scoreB !== null && playerAId && playerBId) {
-    winnerId = scoreA > scoreB ? playerAId : scoreB > scoreA ? playerBId : null;
-  }
-
+  const round = Number(formData.get("round")) || 1;
+  const slot = Number(formData.get("slot")) || 0;
   const updated = await prisma.psMatch.update({
     where: { id },
-    data: { playerAId, playerBId, scoreA, scoreB, status, scheduledTime, winnerId },
+    data: { round, slot, ...parseMatch(formData) },
   });
-
-  // Avanzar al ganador en el cuadro y recalcular estadísticas.
   await advanceWinner(updated);
-  await refreshStats();
+  revalidateAll();
 }
 
 async function deleteMatch(formData) {
@@ -101,35 +94,20 @@ async function deleteMatch(formData) {
   const id = Number(formData.get("id"));
   if (id) {
     await prisma.psMatch.delete({ where: { id } });
-    await refreshStats();
+    revalidateAll();
   }
 }
 
 async function resetTournament() {
   "use server";
   await prisma.psMatch.deleteMany({});
-  await prisma.psPlayer.updateMany({ data: { wins: 0, losses: 0, points: 0 } });
-  await recomputeTeamTotals();
   revalidateAll();
 }
 
-function PlayerSelect({ name, players, defaultValue, placeholder }) {
-  return (
-    <select name={name} defaultValue={defaultValue ?? ""} className={s.input}>
-      <option value="">{placeholder}</option>
-      {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-    </select>
-  );
-}
-
 export default async function AdminPlaystation() {
-  const [teams, players, matches] = await Promise.all([
-    prisma.team.findMany({ orderBy: { name: "asc" } }),
-    prisma.psPlayer.findMany({ include: { team: true }, orderBy: [{ points: "desc" }, { name: "asc" }] }),
-    prisma.psMatch.findMany({
-      include: { playerA: true, playerB: true },
-      orderBy: [{ round: "asc" }, { slot: "asc" }],
-    }),
+  const [players, matches] = await Promise.all([
+    prisma.psPlayer.findMany({ orderBy: [{ wins: "desc" }, { name: "asc" }] }),
+    prisma.psMatch.findMany({ orderBy: [{ round: "asc" }, { slot: "asc" }] }),
   ]);
 
   return (
@@ -137,39 +115,41 @@ export default async function AdminPlaystation() {
       <AdminPageTitle
         icon="stadia_controller"
         title="Torneo EA SPORTS FC"
-        description="Gestiona participantes, emparejamientos y resultados. El cuadro avanza y los puntos se suman a la clasificación general automáticamente."
+        description="Escribe los equipos/participantes a mano en cada enfrentamiento. Los puntos de esta competición se ponen manualmente en la Clasificación General (Ajuste manual de cada equipo)."
       />
 
       {/* Reiniciar torneo */}
       <div className="mb-8 flex items-center justify-between border border-error-container bg-error-container/10 p-4">
         <div>
           <p className="label-caps text-error">Zona de riesgo</p>
-          <p className="text-sm text-on-surface-variant">Elimina todos los partidos y reinicia las estadísticas (conserva los participantes).</p>
+          <p className="text-sm text-on-surface-variant">Elimina todos los enfrentamientos (conserva los participantes).</p>
         </div>
         <form action={resetTournament}>
-          <ConfirmButton
-            icon="restart_alt"
-            message="¿Reiniciar el torneo? Se eliminarán todos los partidos y se pondrán a cero las estadísticas."
-          >
+          <ConfirmButton icon="restart_alt" message="¿Reiniciar el torneo? Se eliminarán todos los enfrentamientos.">
             Reiniciar torneo
           </ConfirmButton>
         </form>
       </div>
 
-      {/* Participantes */}
+      {/* Participantes / clasificación manual */}
       <section className="mb-12">
-        <h2 className="label-caps mb-4 text-tertiary">Participantes</h2>
-        <form action={addPlayer} className={`${s.panelPad} mb-4 grid gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end`}>
+        <h2 className="label-caps mb-4 text-tertiary">Participantes (clasificación)</h2>
+        <form action={addPlayer} className={`${s.panelPad} mb-4 grid gap-3 md:grid-cols-[1fr_1fr_100px_100px_auto] md:items-end`}>
           <div>
-            <label className={s.label}>Nombre</label>
+            <label className={s.label}>Participante</label>
             <input name="name" required className={s.input} />
           </div>
           <div>
-            <label className={s.label}>Equipo militar</label>
-            <select name="teamId" className={s.input}>
-              <option value="">Sin equipo</option>
-              {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
+            <label className={s.label}>Equipo</label>
+            <input name="militaryUnit" placeholder="Equipo militar" className={s.input} />
+          </div>
+          <div>
+            <label className={s.label}>Victorias</label>
+            <input name="wins" type="number" min="0" defaultValue={0} className={s.input} />
+          </div>
+          <div>
+            <label className={s.label}>Derrotas</label>
+            <input name="losses" type="number" min="0" defaultValue={0} className={s.input} />
           </div>
           <button type="submit" className={s.btnPrimary}>
             <span className="material-symbols-outlined text-[20px]">person_add</span>
@@ -180,33 +160,33 @@ export default async function AdminPlaystation() {
         <div className="space-y-3">
           {players.map((p) => (
             <div key={p.id} className={`${s.panelPad} flex flex-col gap-3 md:flex-row md:items-end`}>
-              <form action={updatePlayer} className="grid flex-1 gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
+              <form action={updatePlayer} className="grid flex-1 gap-3 md:grid-cols-[1fr_1fr_100px_100px_auto] md:items-end">
                 <input type="hidden" name="id" value={p.id} />
                 <div>
-                  <label className={s.label}>Nombre</label>
+                  <label className={s.label}>Participante</label>
                   <input name="name" defaultValue={p.name} required className={s.input} />
                 </div>
                 <div>
                   <label className={s.label}>Equipo</label>
-                  <select name="teamId" defaultValue={p.teamId ?? ""} className={s.input}>
-                    <option value="">Sin equipo</option>
-                    {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
+                  <input name="militaryUnit" defaultValue={p.militaryUnit || ""} className={s.input} />
+                </div>
+                <div>
+                  <label className={s.label}>Victorias</label>
+                  <input name="wins" type="number" min="0" defaultValue={p.wins} className={s.input} />
+                </div>
+                <div>
+                  <label className={s.label}>Derrotas</label>
+                  <input name="losses" type="number" min="0" defaultValue={p.losses} className={s.input} />
                 </div>
                 <button type="submit" className={s.btnAccent}>
                   <span className="material-symbols-outlined text-[18px]">save</span>
                   <span className="label-caps">Guardar</span>
                 </button>
               </form>
-              <div className="flex items-center gap-3">
-                <span className="data-mono text-sm text-on-surface-variant">
-                  {p.wins}V · {p.losses}D · {p.points}pts
-                </span>
-                <form action={deletePlayer}>
-                  <input type="hidden" name="id" value={p.id} />
-                  <ConfirmButton message={`¿Eliminar a "${p.name}"?`}>Eliminar</ConfirmButton>
-                </form>
-              </div>
+              <form action={deletePlayer}>
+                <input type="hidden" name="id" value={p.id} />
+                <ConfirmButton message={`¿Eliminar a "${p.name}"?`}>Eliminar</ConfirmButton>
+              </form>
             </div>
           ))}
           {players.length === 0 && (
@@ -215,13 +195,13 @@ export default async function AdminPlaystation() {
         </div>
       </section>
 
-      {/* Emparejamientos */}
+      {/* Enfrentamientos */}
       <section>
         <h2 className="label-caps mb-4 text-tertiary">Cuadro y Resultados</h2>
         <details className="mb-4">
           <summary className={`${s.btnPrimary} cursor-pointer list-none`}>
             <span className="material-symbols-outlined text-[20px]">add</span>
-            <span className="label-caps">Nuevo Emparejamiento</span>
+            <span className="label-caps">Nuevo Enfrentamiento</span>
           </summary>
           <form action={addMatch} className={`${s.panelPad} mt-3 grid gap-3 md:grid-cols-2`}>
             <div>
@@ -233,18 +213,32 @@ export default async function AdminPlaystation() {
               <input name="slot" type="number" min="0" defaultValue={0} className={s.input} />
             </div>
             <div>
-              <label className={s.label}>Participante A</label>
-              <PlayerSelect name="playerAId" players={players} placeholder="Por definir" />
+              <label className={s.label}>Participante/Equipo A</label>
+              <input name="playerAName" placeholder="Nombre" className={s.input} />
             </div>
             <div>
-              <label className={s.label}>Participante B</label>
-              <PlayerSelect name="playerBId" players={players} placeholder="Por definir" />
+              <label className={s.label}>Participante/Equipo B</label>
+              <input name="playerBName" placeholder="Nombre" className={s.input} />
+            </div>
+            <div>
+              <label className={s.label}>Estado</label>
+              <select name="status" defaultValue="Pendiente" className={s.input}>
+                {ESTADOS.map((e) => <option key={e} value={e}>{e === "EnJuego" ? "En Juego" : e}</option>)}
+              </select>
             </div>
             <div>
               <label className={s.label}>Hora</label>
               <input name="scheduledTime" type="time" className={s.input} />
             </div>
-            <div className="flex items-end">
+            <div>
+              <label className={s.label}>Goles A</label>
+              <input name="scoreA" type="number" min="0" className={s.input} />
+            </div>
+            <div>
+              <label className={s.label}>Goles B</label>
+              <input name="scoreB" type="number" min="0" className={s.input} />
+            </div>
+            <div className="md:col-span-2">
               <button type="submit" className={s.btnPrimary}>
                 <span className="material-symbols-outlined text-[20px]">save</span>
                 <span className="label-caps">Crear</span>
@@ -261,29 +255,19 @@ export default async function AdminPlaystation() {
                   Ronda {m.round} · Enc. {String(m.slot + 1).padStart(2, "0")}
                 </span>
                 <span className="text-sm text-on-surface">
-                  {m.playerA?.name || "Por definir"} <span className="text-on-surface-variant">vs</span> {m.playerB?.name || "Por definir"}
+                  {m.playerAName || "Por definir"} <span className="text-on-surface-variant">vs</span> {m.playerBName || "Por definir"}
                 </span>
               </div>
               <form action={updateMatch} className="space-y-3">
                 <input type="hidden" name="id" value={m.id} />
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div>
-                    <label className={s.label}>Participante A</label>
-                    <PlayerSelect name="playerAId" players={players} defaultValue={m.playerAId} placeholder="Por definir" />
-                  </div>
-                  <div>
-                    <label className={s.label}>Participante B</label>
-                    <PlayerSelect name="playerBId" players={players} defaultValue={m.playerBId} placeholder="Por definir" />
-                  </div>
-                </div>
                 <div className="grid gap-3 md:grid-cols-4">
                   <div>
-                    <label className={s.label}>Goles A</label>
-                    <input name="scoreA" type="number" min="0" defaultValue={m.scoreA ?? ""} className={s.input} />
+                    <label className={s.label}>Ronda</label>
+                    <input name="round" type="number" min="1" defaultValue={m.round} className={s.input} />
                   </div>
                   <div>
-                    <label className={s.label}>Goles B</label>
-                    <input name="scoreB" type="number" min="0" defaultValue={m.scoreB ?? ""} className={s.input} />
+                    <label className={s.label}>Posición</label>
+                    <input name="slot" type="number" min="0" defaultValue={m.slot} className={s.input} />
                   </div>
                   <div>
                     <label className={s.label}>Estado</label>
@@ -294,6 +278,26 @@ export default async function AdminPlaystation() {
                   <div>
                     <label className={s.label}>Hora</label>
                     <input name="scheduledTime" type="time" defaultValue={m.scheduledTime ?? ""} className={s.input} />
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className={s.label}>Participante/Equipo A</label>
+                    <input name="playerAName" defaultValue={m.playerAName ?? ""} placeholder="Nombre" className={s.input} />
+                  </div>
+                  <div>
+                    <label className={s.label}>Participante/Equipo B</label>
+                    <input name="playerBName" defaultValue={m.playerBName ?? ""} placeholder="Nombre" className={s.input} />
+                  </div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className={s.label}>Goles A</label>
+                    <input name="scoreA" type="number" min="0" defaultValue={m.scoreA ?? ""} className={s.input} />
+                  </div>
+                  <div>
+                    <label className={s.label}>Goles B</label>
+                    <input name="scoreB" type="number" min="0" defaultValue={m.scoreB ?? ""} className={s.input} />
                   </div>
                 </div>
                 <div className="border-t border-outline-variant pt-3">
@@ -312,7 +316,7 @@ export default async function AdminPlaystation() {
             </div>
           ))}
           {matches.length === 0 && (
-            <p className={`${s.panelPad} text-center text-on-surface-variant`}>No hay emparejamientos. Crea el cuadro.</p>
+            <p className={`${s.panelPad} text-center text-on-surface-variant`}>No hay enfrentamientos. Crea el cuadro.</p>
           )}
         </div>
       </section>

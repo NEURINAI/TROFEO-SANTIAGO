@@ -12,7 +12,6 @@ export const metadata = {
 
 export default async function VoleyPage() {
   const matches = await prisma.volleyMatch.findMany({
-    include: { teamA: true, teamB: true },
     orderBy: [{ round: "asc" }, { slot: "asc" }],
   });
 
@@ -28,14 +27,9 @@ export default async function VoleyPage() {
         m.scheduledDate || m.scheduledTime
           ? `${m.scheduledDate || ""} ${m.scheduledTime || ""}`.trim()
           : null,
-      sideA: { name: m.teamA?.name || "Por definir", score: a !== undefined && a !== "" ? a : null },
-      sideB: { name: m.teamB?.name || "Por definir", score: b !== undefined && b !== "" ? b : null },
-      winnerName:
-        m.winnerId && m.teamA && m.winnerId === m.teamA.id
-          ? m.teamA.name
-          : m.winnerId && m.teamB && m.winnerId === m.teamB.id
-          ? m.teamB.name
-          : null,
+      sideA: { name: m.teamAName || "Por definir", score: a !== undefined && a !== "" ? a : null },
+      sideB: { name: m.teamBName || "Por definir", score: b !== undefined && b !== "" ? b : null },
+      winnerName: m.winnerName || null,
     };
   });
 

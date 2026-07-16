@@ -27,7 +27,7 @@ export default async function AdminClasificacion() {
       <AdminPageTitle
         icon="emoji_events"
         title="Clasificación General"
-        description="Los puntos se calculan automáticamente por competición. Puedes añadir un ajuste manual y observaciones a cada equipo."
+        description="Cross, CrossFit y Paellas se suman automáticamente. Los puntos de Vóley y FIFA26 añádelos en el 'Ajuste manual' de cada equipo. También puedes escribir observaciones."
       />
 
       <div className="space-y-4">
@@ -45,11 +45,9 @@ export default async function AdminClasificacion() {
             <div className="mb-4 flex flex-wrap gap-2 text-xs">
               {[
                 ["Cross", t.breakdown.cross],
-                ["Vóley", t.breakdown.voley],
                 ["CrossFit", t.breakdown.crossfit],
                 ["Paellas", t.breakdown.paellas],
-                ["EA FC", t.breakdown.playstation],
-                ["Ajuste", t.manualAdjust],
+                ["Ajuste manual", t.manualAdjust],
               ].map(([label, val]) => (
                 <span key={label} className="border border-outline-variant px-2 py-1 text-on-surface-variant">
                   {label}: <span className="data-mono text-on-surface">{val}</span>

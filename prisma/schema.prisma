@@ -66,6 +66,8 @@ model VolleyMatch {
   teamA         Team?    @relation("TeamA", fields: [teamAId], references: [id])
   teamBId       Int?
   teamB         Team?    @relation("TeamB", fields: [teamBId], references: [id])
+  teamAName     String? // Nombre escrito a mano (los equipos pueden no estar en la clasificación)
+  teamBName     String?
   result        String? // p. ej. "2-1"
   teamAPoints   Int      @default(0)
   teamBPoints   Int      @default(0)
@@ -74,6 +76,7 @@ model VolleyMatch {
   scheduledTime String?
   field         String?
   winnerId      Int?
+  winnerName    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -126,11 +129,14 @@ model PsMatch {
   playerA       PsPlayer? @relation("PsPlayerA", fields: [playerAId], references: [id])
   playerBId     Int?
   playerB       PsPlayer? @relation("PsPlayerB", fields: [playerBId], references: [id])
+  playerAName   String? // Nombre escrito a mano (participantes/equipos libres)
+  playerBName   String?
   scoreA        Int?
   scoreB        Int?
   status        String    @default("Pendiente") // Pendiente | EnJuego | Finalizado
   scheduledTime String?
   winnerId      Int?
+  winnerName    String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
