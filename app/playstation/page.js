@@ -2,18 +2,16 @@ import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/PageHeader";
 import NormasButton from "@/components/NormasButton";
 import Bracket from "@/components/Bracket";
-import ResultsTable from "@/components/ResultsTable";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Torneo EA SPORTS FC",
-  description: "Cuadro eliminatorio, participantes y clasificación del torneo PlayStation EA SPORTS FC.",
+  description: "Fase de grupos y cuadro eliminatorio del torneo PlayStation EA SPORTS FC.",
 };
 
 export default async function PlaystationPage() {
-  const [players, matches, groupTeams] = await Promise.all([
-    prisma.psPlayer.findMany({ orderBy: [{ wins: "desc" }, { name: "asc" }] }),
+  const [matches, groupTeams] = await Promise.all([
     prisma.psMatch.findMany({ orderBy: [{ round: "asc" }, { slot: "asc" }] }),
     prisma.psGroupTeam.findMany({ orderBy: [{ wins: "desc" }, { points: "desc" }] }),
   ]);
@@ -34,14 +32,6 @@ export default async function PlaystationPage() {
     sideA: { name: m.playerAName || "Por definir", score: m.scoreA },
     sideB: { name: m.playerBName || "Por definir", score: m.scoreB },
     winnerName: m.winnerName || null,
-  }));
-
-  const classification = players.map((p) => ({
-    id: p.id,
-    participante: p.name,
-    equipo: p.militaryUnit || "—",
-    victorias: p.wins,
-    derrotas: p.losses,
   }));
 
   return (
@@ -123,24 +113,6 @@ export default async function PlaystationPage() {
             <h2 className="font-display text-2xl font-bold text-on-surface">Cuadro Eliminatorio</h2>
           </div>
           <Bracket matches={bracket} emptyLabel="El cuadro aún no ha sido definido." />
-        </section>
-
-        <section>
-          <div className="mb-4 flex items-center gap-3">
-            <span className="material-symbols-outlined text-tertiary">leaderboard</span>
-            <h2 className="font-display text-2xl font-bold text-on-surface">Clasificación</h2>
-          </div>
-          <ResultsTable
-            rankColumn
-            searchPlaceholder="Buscar participante o equipo..."
-            columns={[
-              { key: "participante", label: "Participante" },
-              { key: "equipo", label: "Equipo" },
-              { key: "victorias", label: "Victorias", mono: true, align: "right" },
-              { key: "derrotas", label: "Derrotas", mono: true, align: "right" },
-            ]}
-            rows={classification}
-          />
         </section>
       </div>
     </div>

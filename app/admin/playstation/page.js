@@ -15,41 +15,6 @@ function revalidateAll() {
   revalidatePath("/playstation");
 }
 
-// --- Participantes (clasificación manual) ---
-async function addPlayer(formData) {
-  "use server";
-  const name = formData.get("name")?.trim();
-  const militaryUnit = formData.get("militaryUnit")?.trim() || null;
-  const wins = Number(formData.get("wins")) || 0;
-  const losses = Number(formData.get("losses")) || 0;
-  if (name) {
-    await prisma.psPlayer.create({ data: { name, militaryUnit, wins, losses } });
-    revalidateAll();
-  }
-}
-
-async function updatePlayer(formData) {
-  "use server";
-  const id = Number(formData.get("id"));
-  const name = formData.get("name")?.trim();
-  const militaryUnit = formData.get("militaryUnit")?.trim() || null;
-  const wins = Number(formData.get("wins")) || 0;
-  const losses = Number(formData.get("losses")) || 0;
-  if (id && name) {
-    await prisma.psPlayer.update({ where: { id }, data: { name, militaryUnit, wins, losses } });
-    revalidateAll();
-  }
-}
-
-async function deletePlayer(formData) {
-  "use server";
-  const id = Number(formData.get("id"));
-  if (id) {
-    await prisma.psPlayer.delete({ where: { id } });
-    revalidateAll();
-  }
-}
-
 // --- Enfrentamientos (nombres a mano) ---
 function parseMatch(formData) {
   const playerAName = formData.get("playerAName")?.trim() || null;
@@ -145,8 +110,7 @@ async function deleteGroupTeam(formData) {
 }
 
 export default async function AdminPlaystation() {
-  const [players, matches, groupTeams] = await Promise.all([
-    prisma.psPlayer.findMany({ orderBy: [{ wins: "desc" }, { name: "asc" }] }),
+  const [matches, groupTeams] = await Promise.all([
     prisma.psMatch.findMany({ orderBy: [{ round: "asc" }, { slot: "asc" }] }),
     prisma.psGroupTeam.findMany({ orderBy: [{ groupName: "asc" }, { wins: "desc" }, { points: "desc" }] }),
   ]);
@@ -249,70 +213,6 @@ export default async function AdminPlaystation() {
             Aún no hay grupos. Añade equipos escribiendo un nombre de grupo (p. ej. &quot;Grupo 1&quot;) y el equipo.
           </p>
         )}
-      </section>
-
-      {/* Participantes / clasificación manual */}
-      <section className="mb-12">
-        <h2 className="label-caps mb-4 text-tertiary">Participantes (clasificación)</h2>
-        <form action={addPlayer} className={`${s.panelPad} mb-4 grid gap-3 md:grid-cols-[1fr_1fr_100px_100px_auto] md:items-end`}>
-          <div>
-            <label className={s.label}>Participante</label>
-            <input name="name" required className={s.input} />
-          </div>
-          <div>
-            <label className={s.label}>Equipo</label>
-            <input name="militaryUnit" placeholder="Equipo militar" className={s.input} />
-          </div>
-          <div>
-            <label className={s.label}>Victorias</label>
-            <input name="wins" type="number" min="0" defaultValue={0} className={s.input} />
-          </div>
-          <div>
-            <label className={s.label}>Derrotas</label>
-            <input name="losses" type="number" min="0" defaultValue={0} className={s.input} />
-          </div>
-          <button type="submit" className={s.btnPrimary}>
-            <span className="material-symbols-outlined text-[20px]">person_add</span>
-            <span className="label-caps">Añadir</span>
-          </button>
-        </form>
-
-        <div className="space-y-3">
-          {players.map((p) => (
-            <div key={p.id} className={`${s.panelPad} flex flex-col gap-3 md:flex-row md:items-end`}>
-              <form action={updatePlayer} className="grid flex-1 gap-3 md:grid-cols-[1fr_1fr_100px_100px_auto] md:items-end">
-                <input type="hidden" name="id" value={p.id} />
-                <div>
-                  <label className={s.label}>Participante</label>
-                  <input name="name" defaultValue={p.name} required className={s.input} />
-                </div>
-                <div>
-                  <label className={s.label}>Equipo</label>
-                  <input name="militaryUnit" defaultValue={p.militaryUnit || ""} className={s.input} />
-                </div>
-                <div>
-                  <label className={s.label}>Victorias</label>
-                  <input name="wins" type="number" min="0" defaultValue={p.wins} className={s.input} />
-                </div>
-                <div>
-                  <label className={s.label}>Derrotas</label>
-                  <input name="losses" type="number" min="0" defaultValue={p.losses} className={s.input} />
-                </div>
-                <button type="submit" className={s.btnAccent}>
-                  <span className="material-symbols-outlined text-[18px]">save</span>
-                  <span className="label-caps">Guardar</span>
-                </button>
-              </form>
-              <form action={deletePlayer}>
-                <input type="hidden" name="id" value={p.id} />
-                <ConfirmButton message={`¿Eliminar a "${p.name}"?`}>Eliminar</ConfirmButton>
-              </form>
-            </div>
-          ))}
-          {players.length === 0 && (
-            <p className={`${s.panelPad} text-center text-on-surface-variant`}>No hay participantes.</p>
-          )}
-        </div>
       </section>
 
       {/* Enfrentamientos */}
