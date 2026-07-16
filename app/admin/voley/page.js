@@ -70,10 +70,11 @@ async function updateGroupTeam(formData) {
   const played = Number(formData.get("played")) || 0;
   const wins = Number(formData.get("wins")) || 0;
   const points = Number(formData.get("points")) || 0;
+  const classified = !!formData.get("classified");
   if (id && teamName && groupName) {
     await prisma.volleyGroupTeam.update({
       where: { id },
-      data: { teamName, groupName, played, wins, points },
+      data: { teamName, groupName, played, wins, points, classified },
     });
     revalidateAll();
   }
@@ -186,12 +187,12 @@ export default async function AdminVoley() {
           <div key={g} className="mb-6">
             <h3 className="font-display text-lg font-bold text-on-surface">{g}</h3>
             <p className="mb-2 text-xs text-on-surface-variant">
-              Orden por victorias y puntos. Los 2 primeros clasifican (se resaltan en la web).
+              Orden por victorias y puntos. Marca &quot;Clasifica&quot; a mano cuando acabe la fase (se resalta en la web).
             </p>
             <div className="space-y-2">
               {groupTeams.filter((t) => t.groupName === g).map((t, i) => (
                 <div key={t.id} className={s.panelPad}>
-                  <form action={updateGroupTeam} className="grid gap-3 md:grid-cols-[auto_1fr_100px_110px_110px_auto] md:items-end">
+                  <form action={updateGroupTeam} className="grid gap-3 md:grid-cols-[auto_1fr_84px_84px_84px_auto_auto] md:items-end">
                     <input type="hidden" name="id" value={t.id} />
                     <input type="hidden" name="groupName" value={t.groupName} />
                     <span className="data-mono self-center pt-4 text-tertiary">{String(i + 1).padStart(2, "0")}</span>
@@ -211,6 +212,10 @@ export default async function AdminVoley() {
                       <label className={s.label}>Puntos</label>
                       <input name="points" type="number" defaultValue={t.points} className={s.input} />
                     </div>
+                    <label className="flex items-center gap-2 pb-2 md:pb-2.5">
+                      <input name="classified" type="checkbox" defaultChecked={t.classified} className="h-4 w-4 accent-[var(--color-tertiary)]" />
+                      <span className="label-caps text-on-surface-variant">Clasifica</span>
+                    </label>
                     <button type="submit" className={s.btnAccent}>
                       <span className="material-symbols-outlined text-[18px]">save</span>
                       <span className="label-caps">Guardar</span>

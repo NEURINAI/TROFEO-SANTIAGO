@@ -62,7 +62,7 @@ export default async function VoleyPage() {
               <h2 className="font-display text-2xl font-bold text-on-surface">Fase de Grupos</h2>
             </div>
             <p className="mb-6 text-sm text-on-surface-variant">
-              Los <span className="text-tertiary">2 primeros</span> de cada grupo (por victorias y puntos) pasan a la siguiente fase.
+              Clasificación por victorias y puntos.
             </p>
             <div className="grid gap-6 md:grid-cols-2">
               {groups.map((grp) => (
@@ -82,7 +82,7 @@ export default async function VoleyPage() {
                     </thead>
                     <tbody>
                       {grp.teams.map((t, i) => {
-                        const clasifica = i < 2;
+                        const clasifica = t.classified;
                         return (
                           <tr
                             key={t.id}
