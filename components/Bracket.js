@@ -12,6 +12,8 @@ const STATUS = {
 };
 
 function roundName(round, maxRound) {
+  // Con una sola ronda se muestra el número (no tiene sentido llamarla "Final").
+  if (maxRound <= 1) return `Ronda ${round}`;
   const fromEnd = maxRound - round;
   if (fromEnd === 0) return "Final";
   if (fromEnd === 1) return "Semifinales";
