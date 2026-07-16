@@ -81,6 +81,16 @@ model VolleyMatch {
   updatedAt     DateTime @updatedAt
 }
 
+model VolleyGroupTeam {
+  id        Int      @id @default(autoincrement())
+  groupName String // p. ej. "Grupo 1"
+  teamName  String
+  played    Int      @default(0)
+  wins      Int      @default(0)
+  points    Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
 model CrossfitResult {
   id        Int      @id @default(autoincrement())
   teamId    Int      @unique
