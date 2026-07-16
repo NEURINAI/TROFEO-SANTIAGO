@@ -104,11 +104,52 @@ async function resetTournament() {
   revalidateAll();
 }
 
+// --- Fase de grupos ---
+async function addGroupTeam(formData) {
+  "use server";
+  const groupName = formData.get("groupName")?.trim();
+  const teamName = formData.get("teamName")?.trim();
+  if (groupName && teamName) {
+    await prisma.psGroupTeam.create({ data: { groupName, teamName } });
+    revalidateAll();
+  }
+}
+
+async function updateGroupTeam(formData) {
+  "use server";
+  const id = Number(formData.get("id"));
+  const teamName = formData.get("teamName")?.trim();
+  const groupName = formData.get("groupName")?.trim();
+  const played = Number(formData.get("played")) || 0;
+  const wins = Number(formData.get("wins")) || 0;
+  const points = Number(formData.get("points")) || 0;
+  const classified = !!formData.get("classified");
+  if (id && teamName && groupName) {
+    await prisma.psGroupTeam.update({
+      where: { id },
+      data: { teamName, groupName, played, wins, points, classified },
+    });
+    revalidateAll();
+  }
+}
+
+async function deleteGroupTeam(formData) {
+  "use server";
+  const id = Number(formData.get("id"));
+  if (id) {
+    await prisma.psGroupTeam.delete({ where: { id } });
+    revalidateAll();
+  }
+}
+
 export default async function AdminPlaystation() {
-  const [players, matches] = await Promise.all([
+  const [players, matches, groupTeams] = await Promise.all([
     prisma.psPlayer.findMany({ orderBy: [{ wins: "desc" }, { name: "asc" }] }),
     prisma.psMatch.findMany({ orderBy: [{ round: "asc" }, { slot: "asc" }] }),
+    prisma.psGroupTeam.findMany({ orderBy: [{ groupName: "asc" }, { wins: "desc" }, { points: "desc" }] }),
   ]);
+
+  const groupNames = [...new Set(groupTeams.map((t) => t.groupName))].sort();
 
   return (
     <div>
@@ -130,6 +171,83 @@ export default async function AdminPlaystation() {
           </ConfirmButton>
         </form>
       </div>
+
+      {/* Fase de grupos */}
+      <section className="mb-12">
+        <h2 className="label-caps mb-4 text-tertiary">Fase de Grupos</h2>
+        <form action={addGroupTeam} className={`${s.panelPad} mb-4 grid gap-3 md:grid-cols-[160px_1fr_auto] md:items-end`}>
+          <div>
+            <label className={s.label}>Grupo</label>
+            <input name="groupName" list="grupos-fifa" placeholder="Grupo 1" required className={s.input} />
+            <datalist id="grupos-fifa">
+              {groupNames.map((g) => <option key={g} value={g} />)}
+            </datalist>
+          </div>
+          <div>
+            <label className={s.label}>Equipo/Participante</label>
+            <input name="teamName" required className={s.input} />
+          </div>
+          <button type="submit" className={s.btnPrimary}>
+            <span className="material-symbols-outlined text-[20px]">add</span>
+            <span className="label-caps">Añadir al grupo</span>
+          </button>
+        </form>
+
+        {groupNames.map((g) => (
+          <div key={g} className="mb-6">
+            <h3 className="font-display text-lg font-bold text-on-surface">{g}</h3>
+            <p className="mb-2 text-xs text-on-surface-variant">
+              Orden por victorias y puntos. Marca &quot;Clasifica&quot; a mano cuando acabe la fase (se resalta en la web).
+            </p>
+            <div className="space-y-2">
+              {groupTeams.filter((t) => t.groupName === g).map((t, i) => (
+                <div key={t.id} className={s.panelPad}>
+                  <form action={updateGroupTeam} className="grid gap-3 md:grid-cols-[auto_1fr_84px_84px_84px_auto_auto] md:items-end">
+                    <input type="hidden" name="id" value={t.id} />
+                    <input type="hidden" name="groupName" value={t.groupName} />
+                    <span className="data-mono self-center pt-4 text-tertiary">{String(i + 1).padStart(2, "0")}</span>
+                    <div>
+                      <label className={s.label}>Equipo/Participante</label>
+                      <input name="teamName" defaultValue={t.teamName} required className={s.input} />
+                    </div>
+                    <div>
+                      <label className={s.label}>Jugados</label>
+                      <input name="played" type="number" min="0" defaultValue={t.played} className={s.input} />
+                    </div>
+                    <div>
+                      <label className={s.label}>Victorias</label>
+                      <input name="wins" type="number" min="0" defaultValue={t.wins} className={s.input} />
+                    </div>
+                    <div>
+                      <label className={s.label}>Puntos</label>
+                      <input name="points" type="number" defaultValue={t.points} className={s.input} />
+                    </div>
+                    <label className="flex items-center gap-2 pb-2 md:pb-2.5">
+                      <input name="classified" type="checkbox" defaultChecked={t.classified} className="h-4 w-4 accent-[var(--color-tertiary)]" />
+                      <span className="label-caps text-on-surface-variant">Clasifica</span>
+                    </label>
+                    <button type="submit" className={s.btnAccent}>
+                      <span className="material-symbols-outlined text-[18px]">save</span>
+                      <span className="label-caps">Guardar</span>
+                    </button>
+                  </form>
+                  <div className="mt-2 flex justify-end">
+                    <form action={deleteGroupTeam}>
+                      <input type="hidden" name="id" value={t.id} />
+                      <ConfirmButton message={`¿Quitar "${t.teamName}" del ${t.groupName}?`}>Quitar</ConfirmButton>
+                    </form>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+        {groupTeams.length === 0 && (
+          <p className={`${s.panelPad} text-center text-on-surface-variant`}>
+            Aún no hay grupos. Añade equipos escribiendo un nombre de grupo (p. ej. &quot;Grupo 1&quot;) y el equipo.
+          </p>
+        )}
+      </section>
 
       {/* Participantes / clasificación manual */}
       <section className="mb-12">

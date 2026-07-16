@@ -92,6 +92,17 @@ model VolleyGroupTeam {
   createdAt  DateTime @default(now())
 }
 
+model PsGroupTeam {
+  id         Int      @id @default(autoincrement())
+  groupName  String
+  teamName   String
+  played     Int      @default(0)
+  wins       Int      @default(0)
+  points     Int      @default(0)
+  classified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
 model CrossfitResult {
   id        Int      @id @default(autoincrement())
   teamId    Int      @unique
