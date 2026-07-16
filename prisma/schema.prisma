@@ -61,6 +61,7 @@ model CrossResult {
 model VolleyMatch {
   id            Int      @id @default(autoincrement())
   round         Int      @default(1) // Ronda del cuadro (1 = primera, mayor = final)
+  roundLabel    String? // Nombre de la ronda escrito a mano (p. ej. "Cuartos", "Final")
   slot          Int      @default(0) // Posición dentro de la ronda
   teamAId       Int?
   teamA         Team?    @relation("TeamA", fields: [teamAId], references: [id])
@@ -146,6 +147,7 @@ model PsPlayer {
 model PsMatch {
   id            Int       @id @default(autoincrement())
   round         Int       @default(1)
+  roundLabel    String? // Nombre de la ronda escrito a mano
   slot          Int       @default(0)
   playerAId     Int?
   playerA       PsPlayer? @relation("PsPlayerA", fields: [playerAId], references: [id])

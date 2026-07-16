@@ -27,6 +27,7 @@ export default async function VoleyPage() {
     return {
       id: m.id,
       round: m.round,
+      roundLabel: m.roundLabel,
       slot: m.slot,
       status: m.status,
       field: m.field,

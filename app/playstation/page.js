@@ -27,6 +27,7 @@ export default async function PlaystationPage() {
   const bracket = matches.map((m) => ({
     id: m.id,
     round: m.round,
+    roundLabel: m.roundLabel,
     slot: m.slot,
     status: m.status,
     schedule: m.scheduledTime ? `${m.scheduledTime} h` : null,

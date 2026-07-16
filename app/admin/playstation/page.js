@@ -63,7 +63,8 @@ function parseMatch(formData) {
   if (status === "Finalizado" && scoreA !== null && scoreB !== null) {
     winnerName = scoreA > scoreB ? playerAName : scoreB > scoreA ? playerBName : null;
   }
-  return { playerAName, playerBName, scoreA, scoreB, status, scheduledTime, winnerName };
+  const roundLabel = formData.get("roundLabel")?.trim() || null;
+  return { playerAName, playerBName, scoreA, scoreB, status, scheduledTime, winnerName, roundLabel };
 }
 
 async function addMatch(formData) {
@@ -322,8 +323,12 @@ export default async function AdminPlaystation() {
             <span className="label-caps">Nuevo Enfrentamiento</span>
           </summary>
           <form action={addMatch} className={`${s.panelPad} mt-3 grid gap-3 md:grid-cols-2`}>
+            <div className="md:col-span-2">
+              <label className={s.label}>Nombre de la ronda (lo que se ve en la web)</label>
+              <input name="roundLabel" placeholder="Ej.: Cuartos, Semifinal, Final, Grupo A..." className={s.input} />
+            </div>
             <div>
-              <label className={s.label}>Ronda</label>
+              <label className={s.label}>Ronda (nº, orden)</label>
               <input name="round" type="number" min="1" defaultValue={1} className={s.input} />
             </div>
             <div>
@@ -378,9 +383,13 @@ export default async function AdminPlaystation() {
               </div>
               <form action={updateMatch} className="space-y-3">
                 <input type="hidden" name="id" value={m.id} />
+                <div>
+                  <label className={s.label}>Nombre de la ronda (lo que se ve en la web)</label>
+                  <input name="roundLabel" defaultValue={m.roundLabel ?? ""} placeholder="Ej.: Cuartos, Semifinal, Final..." className={s.input} />
+                </div>
                 <div className="grid gap-3 md:grid-cols-4">
                   <div>
-                    <label className={s.label}>Ronda</label>
+                    <label className={s.label}>Ronda (nº, orden)</label>
                     <input name="round" type="number" min="1" defaultValue={m.round} className={s.input} />
                   </div>
                   <div>

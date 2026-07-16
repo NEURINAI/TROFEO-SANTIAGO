@@ -16,6 +16,7 @@ function revalidateAll() {
 function parseMatch(formData) {
   return {
     round: Number(formData.get("round")) || 1,
+    roundLabel: formData.get("roundLabel")?.trim() || null,
     slot: Number(formData.get("slot")) || 0,
     teamAName: formData.get("teamAName")?.trim() || null,
     teamBName: formData.get("teamBName")?.trim() || null,
@@ -92,9 +93,13 @@ async function deleteGroupTeam(formData) {
 function MatchFields({ m }) {
   return (
     <>
+      <div>
+        <label className={s.label}>Nombre de la ronda (lo que se ve en la web)</label>
+        <input name="roundLabel" defaultValue={m?.roundLabel ?? ""} placeholder="Ej.: Cuartos, Semifinal, Final, Grupo A..." className={s.input} />
+      </div>
       <div className="grid gap-3 md:grid-cols-4">
         <div>
-          <label className={s.label}>Ronda</label>
+          <label className={s.label}>Ronda (nº, orden)</label>
           <input name="round" type="number" min="1" defaultValue={m?.round ?? 1} className={s.input} />
         </div>
         <div>

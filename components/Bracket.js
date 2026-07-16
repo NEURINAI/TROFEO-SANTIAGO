@@ -61,10 +61,12 @@ export default function Bracket({ matches, emptyLabel = "No hay enfrentamientos 
           const roundMatches = matches
             .filter((m) => m.round === round)
             .sort((a, b) => a.slot - b.slot);
+          // Nombre escrito a mano (si algún enfrentamiento de la ronda lo tiene); si no, el automático.
+          const customLabel = roundMatches.find((m) => m.roundLabel)?.roundLabel;
           return (
             <div key={round} className="flex w-72 flex-col">
               <div className="mb-3 border-b-2 border-tertiary pb-1">
-                <p className="label-caps text-tertiary">{roundName(round, maxRound)}</p>
+                <p className="label-caps text-tertiary">{customLabel || roundName(round, maxRound)}</p>
               </div>
               <div className="flex flex-1 flex-col justify-around gap-4">
                 {roundMatches.map((m) => {
