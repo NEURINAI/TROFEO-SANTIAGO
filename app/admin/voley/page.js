@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import AdminPageTitle from "@/components/AdminPageTitle";
 import ConfirmButton from "@/components/ConfirmButton";
 import * as s from "@/lib/adminStyles";
+import { BRACKET_PHASES } from "@/lib/phases";
 
 export const dynamic = "force-dynamic";
 
@@ -94,8 +95,11 @@ function MatchFields({ m }) {
   return (
     <>
       <div>
-        <label className={s.label}>Nombre de la ronda (lo que se ve en la web)</label>
-        <input name="roundLabel" defaultValue={m?.roundLabel ?? ""} placeholder="Ej.: Cuartos, Semifinal, Final, Grupo A..." className={s.input} />
+        <label className={s.label}>Fase (agrupa el partido en el cuadro)</label>
+        <select name="roundLabel" defaultValue={m?.roundLabel ?? ""} className={s.input}>
+          <option value="">— Automática (por número de ronda) —</option>
+          {BRACKET_PHASES.map((p) => <option key={p} value={p}>{p}</option>)}
+        </select>
       </div>
       <div className="grid gap-3 md:grid-cols-4">
         <div>

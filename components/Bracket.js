@@ -1,8 +1,11 @@
+import { BRACKET_PHASES } from "@/lib/phases";
+
 /*
   Cuadro eliminatorio (bracket) reutilizable — presentacional.
-  props.matches: array de objetos
-    { id, round, slot, sideA:{name, score}, sideB:{name, score},
-      status: 'Pendiente'|'EnJuego'|'Finalizado', winnerName, schedule, field }
+  Los enfrentamientos se agrupan en columnas por su FASE (roundLabel):
+  Fase de Grupo 1/2, Cuartos, Semifinales, Final. Si un partido no tiene
+  fase, se agrupa por "Ronda N".
+  props.matches: { id, round, roundLabel, slot, sideA, sideB, status, winnerName, schedule, field }
 */
 
 const STATUS = {
@@ -11,14 +14,9 @@ const STATUS = {
   Finalizado: { label: "Finalizado", cls: "border-primary-container text-primary" },
 };
 
-function roundName(round, maxRound) {
-  // Con una sola ronda se muestra el número (no tiene sentido llamarla "Final").
-  if (maxRound <= 1) return `Ronda ${round}`;
-  const fromEnd = maxRound - round;
-  if (fromEnd === 0) return "Final";
-  if (fromEnd === 1) return "Semifinales";
-  if (fromEnd === 2) return "Cuartos";
-  return `Ronda ${round}`;
+// Clave de fase de un partido: su etiqueta escrita, o "Ronda N" si no tiene.
+function phaseKey(m) {
+  return m.roundLabel && m.roundLabel.trim() ? m.roundLabel.trim() : `Ronda ${m.round}`;
 }
 
 function Side({ side, isWinner, status }) {
@@ -51,22 +49,30 @@ export default function Bracket({ matches, emptyLabel = "No hay enfrentamientos 
     );
   }
 
-  const rounds = [...new Set(matches.map((m) => m.round))].sort((a, b) => a - b);
-  const maxRound = Math.max(...rounds);
+  // Orden de una fase: primero las predefinidas (Grupo 1/2, Cuartos, Semis, Final),
+  // luego el resto por número de ronda.
+  const phaseOrder = (label) => {
+    const idx = BRACKET_PHASES.indexOf(label);
+    if (idx >= 0) return idx;
+    const rounds = matches.filter((m) => phaseKey(m) === label).map((m) => m.round);
+    return BRACKET_PHASES.length + Math.min(...rounds);
+  };
+
+  const phases = [...new Set(matches.map(phaseKey))].sort(
+    (a, b) => phaseOrder(a) - phaseOrder(b)
+  );
 
   return (
     <div className="overflow-x-auto">
       <div className="flex min-w-max gap-6 pb-2">
-        {rounds.map((round) => {
+        {phases.map((phase) => {
           const roundMatches = matches
-            .filter((m) => m.round === round)
-            .sort((a, b) => a.slot - b.slot);
-          // Nombre escrito a mano (si algún enfrentamiento de la ronda lo tiene); si no, el automático.
-          const customLabel = roundMatches.find((m) => m.roundLabel)?.roundLabel;
+            .filter((m) => phaseKey(m) === phase)
+            .sort((a, b) => a.round - b.round || a.slot - b.slot);
           return (
-            <div key={round} className="flex w-72 flex-col">
+            <div key={phase} className="flex w-72 flex-col">
               <div className="mb-3 border-b-2 border-tertiary pb-1">
-                <p className="label-caps text-tertiary">{customLabel || roundName(round, maxRound)}</p>
+                <p className="label-caps text-tertiary">{phase}</p>
               </div>
               <div className="flex flex-1 flex-col justify-around gap-4">
                 {roundMatches.map((m) => {

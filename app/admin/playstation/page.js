@@ -4,6 +4,7 @@ import { advanceWinner } from "@/lib/ps";
 import AdminPageTitle from "@/components/AdminPageTitle";
 import ConfirmButton from "@/components/ConfirmButton";
 import * as s from "@/lib/adminStyles";
+import { BRACKET_PHASES } from "@/lib/phases";
 
 export const dynamic = "force-dynamic";
 
@@ -324,8 +325,11 @@ export default async function AdminPlaystation() {
           </summary>
           <form action={addMatch} className={`${s.panelPad} mt-3 grid gap-3 md:grid-cols-2`}>
             <div className="md:col-span-2">
-              <label className={s.label}>Nombre de la ronda (lo que se ve en la web)</label>
-              <input name="roundLabel" placeholder="Ej.: Cuartos, Semifinal, Final, Grupo A..." className={s.input} />
+              <label className={s.label}>Fase (agrupa el partido en el cuadro)</label>
+              <select name="roundLabel" defaultValue="" className={s.input}>
+                <option value="">— Automática (por número de ronda) —</option>
+                {BRACKET_PHASES.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
             </div>
             <div>
               <label className={s.label}>Ronda (nº, orden)</label>
@@ -384,8 +388,11 @@ export default async function AdminPlaystation() {
               <form action={updateMatch} className="space-y-3">
                 <input type="hidden" name="id" value={m.id} />
                 <div>
-                  <label className={s.label}>Nombre de la ronda (lo que se ve en la web)</label>
-                  <input name="roundLabel" defaultValue={m.roundLabel ?? ""} placeholder="Ej.: Cuartos, Semifinal, Final..." className={s.input} />
+                  <label className={s.label}>Fase (agrupa el partido en el cuadro)</label>
+                  <select name="roundLabel" defaultValue={m.roundLabel ?? ""} className={s.input}>
+                    <option value="">— Automática (por número de ronda) —</option>
+                    {BRACKET_PHASES.map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
                 </div>
                 <div className="grid gap-3 md:grid-cols-4">
                   <div>
