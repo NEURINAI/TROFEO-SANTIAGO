@@ -30,7 +30,8 @@ function parseMatch(formData) {
     winnerName = scoreA > scoreB ? playerAName : scoreB > scoreA ? playerBName : null;
   }
   const roundLabel = formData.get("roundLabel")?.trim() || null;
-  return { playerAName, playerBName, scoreA, scoreB, status, scheduledTime, winnerName, roundLabel };
+  const field = formData.get("field")?.trim() || null;
+  return { playerAName, playerBName, scoreA, scoreB, status, scheduledTime, winnerName, roundLabel, field };
 }
 
 async function addMatch(formData) {
@@ -257,6 +258,10 @@ export default async function AdminPlaystation() {
               <label className={s.label}>Hora</label>
               <input name="scheduledTime" type="time" className={s.input} />
             </div>
+            <div className="md:col-span-2">
+              <label className={s.label}>Lugar</label>
+              <input name="field" placeholder="Sala de ocio, sede..." className={s.input} />
+            </div>
             <div>
               <label className={s.label}>Goles A</label>
               <input name="scoreA" type="number" min="0" className={s.input} />
@@ -313,6 +318,10 @@ export default async function AdminPlaystation() {
                     <label className={s.label}>Hora</label>
                     <input name="scheduledTime" type="time" defaultValue={m.scheduledTime ?? ""} className={s.input} />
                   </div>
+                </div>
+                <div>
+                  <label className={s.label}>Lugar</label>
+                  <input name="field" defaultValue={m.field ?? ""} placeholder="Sala de ocio, sede..." className={s.input} />
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div>

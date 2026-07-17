@@ -159,6 +159,7 @@ model PsMatch {
   scoreB        Int?
   status        String    @default("Pendiente") // Pendiente | EnJuego | Finalizado
   scheduledTime String?
+  field         String? // Lugar del enfrentamiento
   winnerId      Int?
   winnerName    String?
   createdAt     DateTime  @default(now())

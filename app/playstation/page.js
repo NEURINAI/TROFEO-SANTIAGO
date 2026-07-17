@@ -28,6 +28,7 @@ export default async function PlaystationPage() {
     roundLabel: m.roundLabel,
     slot: m.slot,
     status: m.status,
+    field: m.field,
     schedule: m.scheduledTime ? `${m.scheduledTime} h` : null,
     sideA: { name: m.playerAName || "Por definir", score: m.scoreA },
     sideB: { name: m.playerBName || "Por definir", score: m.scoreB },
