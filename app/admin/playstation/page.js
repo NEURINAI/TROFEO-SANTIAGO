@@ -22,6 +22,7 @@ function parseMatch(formData) {
   const scoreA = formData.get("scoreA") !== "" ? Number(formData.get("scoreA")) : null;
   const scoreB = formData.get("scoreB") !== "" ? Number(formData.get("scoreB")) : null;
   const status = formData.get("status") || "Pendiente";
+  const scheduledDate = formData.get("scheduledDate") || null;
   const scheduledTime = formData.get("scheduledTime") || null;
 
   // Ganador automático si está finalizado y hay marcador.
@@ -31,7 +32,7 @@ function parseMatch(formData) {
   }
   const roundLabel = formData.get("roundLabel")?.trim() || null;
   const field = formData.get("field")?.trim() || null;
-  return { playerAName, playerBName, scoreA, scoreB, status, scheduledTime, winnerName, roundLabel, field };
+  return { playerAName, playerBName, scoreA, scoreB, status, scheduledDate, scheduledTime, winnerName, roundLabel, field };
 }
 
 async function addMatch(formData) {
@@ -265,6 +266,10 @@ export default async function AdminPlaystation() {
               </select>
             </div>
             <div>
+              <label className={s.label}>Fecha</label>
+              <input name="scheduledDate" type="date" className={s.input} />
+            </div>
+            <div>
               <label className={s.label}>Hora</label>
               <input name="scheduledTime" type="time" className={s.input} />
             </div>
@@ -323,6 +328,10 @@ export default async function AdminPlaystation() {
                     <select name="status" defaultValue={m.status} className={s.input}>
                       {ESTADOS.map((e) => <option key={e} value={e}>{e === "EnJuego" ? "En Juego" : e}</option>)}
                     </select>
+                  </div>
+                  <div>
+                    <label className={s.label}>Fecha</label>
+                    <input name="scheduledDate" type="date" defaultValue={m.scheduledDate ?? ""} className={s.input} />
                   </div>
                   <div>
                     <label className={s.label}>Hora</label>

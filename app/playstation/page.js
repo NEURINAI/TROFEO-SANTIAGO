@@ -29,7 +29,10 @@ export default async function PlaystationPage() {
     slot: m.slot,
     status: m.status,
     field: m.field,
-    schedule: m.scheduledTime ? `${m.scheduledTime} h` : null,
+    schedule:
+      m.scheduledDate || m.scheduledTime
+        ? `${m.scheduledDate || ""} ${m.scheduledTime || ""}`.trim()
+        : null,
     sideA: { name: m.playerAName || "Por definir", score: m.scoreA },
     sideB: { name: m.playerBName || "Por definir", score: m.scoreB },
     winnerName: m.winnerName || null,
