@@ -70,6 +70,8 @@ export default async function PlaystationPage() {
                         <th className="label-caps px-3 py-2 text-left text-on-surface-variant">Equipo</th>
                         <th className="label-caps px-3 py-2 text-right text-on-surface-variant">PJ</th>
                         <th className="label-caps px-3 py-2 text-right text-on-surface-variant">V</th>
+                        <th className="label-caps px-3 py-2 text-right text-on-surface-variant">E</th>
+                        <th className="label-caps px-3 py-2 text-right text-on-surface-variant">D</th>
                         <th className="label-caps px-3 py-2 text-right text-on-surface-variant">Pts</th>
                       </tr>
                     </thead>
@@ -96,6 +98,8 @@ export default async function PlaystationPage() {
                             </td>
                             <td className="data-mono px-3 py-2 text-right text-on-surface-variant">{t.played}</td>
                             <td className="data-mono px-3 py-2 text-right text-on-surface">{t.wins}</td>
+                            <td className="data-mono px-3 py-2 text-right text-on-surface-variant">{t.draws}</td>
+                            <td className="data-mono px-3 py-2 text-right text-on-surface-variant">{t.losses}</td>
                             <td className="data-mono px-3 py-2 text-right font-bold text-on-surface">{t.points}</td>
                           </tr>
                         );

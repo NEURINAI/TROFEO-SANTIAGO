@@ -88,6 +88,8 @@ model VolleyGroupTeam {
   teamName   String
   played     Int      @default(0)
   wins       Int      @default(0)
+  draws      Int      @default(0)
+  losses     Int      @default(0)
   points     Int      @default(0)
   classified Boolean  @default(false) // Marcado a mano por el admin al acabar la fase
   createdAt  DateTime @default(now())
@@ -99,6 +101,8 @@ model PsGroupTeam {
   teamName   String
   played     Int      @default(0)
   wins       Int      @default(0)
+  draws      Int      @default(0)
+  losses     Int      @default(0)
   points     Int      @default(0)
   classified Boolean  @default(false)
   createdAt  DateTime @default(now())
