@@ -27,14 +27,15 @@ export default function CountdownRace({ targetHour = 19 }) {
     return () => clearInterval(id);
   }, [targetHour]);
 
-  // Evita desajuste de hidratación: no se pinta hasta calcular en el cliente.
-  if (remaining === null) return null;
-
-  const started = remaining <= 0;
-  const h = Math.floor(remaining / 3600);
-  const m = Math.floor((remaining % 3600) / 60);
-  const sec = remaining % 60;
   const pad = (n) => String(n).padStart(2, "0");
+  const started = remaining !== null && remaining <= 0;
+  let display = "--:--:--";
+  if (remaining !== null && remaining > 0) {
+    const h = Math.floor(remaining / 3600);
+    const m = Math.floor((remaining % 3600) / 60);
+    const sec = remaining % 60;
+    display = `${pad(h)}:${pad(m)}:${pad(sec)}`;
+  }
 
   return (
     <div className="inline-flex items-center gap-3 border-2 border-[#93000a] bg-[#93000a]/15 px-4 py-2">
@@ -44,9 +45,7 @@ export default function CountdownRace({ targetHour = 19 }) {
         {started ? (
           <div className="data-mono text-xl font-bold text-[#ff4d4d]">¡EN MARCHA!</div>
         ) : (
-          <div className="data-mono text-2xl font-bold tabular-nums text-[#ff4d4d]">
-            {pad(h)}:{pad(m)}:{pad(sec)}
-          </div>
+          <div className="data-mono text-2xl font-bold tabular-nums text-[#ff4d4d]">{display}</div>
         )}
       </div>
     </div>
