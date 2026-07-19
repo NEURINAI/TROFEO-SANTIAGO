@@ -2,30 +2,25 @@
 
 import { useEffect, useState } from "react";
 
-// Segundos transcurridos desde medianoche en hora local de Líbano (Asia/Beirut).
-// Usa la zona horaria real, así que respeta el cambio de hora (DST).
-function beirutSecondsNow() {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Beirut",
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  }).formatToParts(new Date());
-  const get = (t) => Number(parts.find((p) => p.type === t)?.value || 0);
-  return get("hour") * 3600 + get("minute") * 60 + get("second");
+// Segundos transcurridos desde medianoche en UTC (fiable en todos los navegadores).
+function utcSecondsNow() {
+  const now = new Date();
+  return now.getUTCHours() * 3600 + now.getUTCMinutes() * 60 + now.getUTCSeconds();
 }
 
-// Cuenta atrás hasta las HH:00 (por defecto 19:00) hora de Líbano.
-export default function CountdownRace({ targetHour = 19 }) {
+// Cuenta atrás hasta la hora objetivo en UTC.
+// Líbano está actualmente en UTC+2, por lo que 19:00 de Líbano = 17:00 UTC.
+// (No se usa la zona "Asia/Beirut" porque su base de datos calcula UTC+3, que no
+//  coincide con la hora real de Líbano.)
+export default function CountdownRace({ targetUtcHour = 17 }) {
   const [remaining, setRemaining] = useState(null);
 
   useEffect(() => {
-    const tick = () => setRemaining(targetHour * 3600 - beirutSecondsNow());
+    const tick = () => setRemaining(targetUtcHour * 3600 - utcSecondsNow());
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [targetHour]);
+  }, [targetUtcHour]);
 
   const pad = (n) => String(n).padStart(2, "0");
   const started = remaining !== null && remaining <= 0;
