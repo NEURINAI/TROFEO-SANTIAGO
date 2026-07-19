@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/PageHeader";
 import NormasButton from "@/components/NormasButton";
 import ResultsTable from "@/components/ResultsTable";
+import CountdownRace from "@/components/CountdownRace";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,8 @@ export default async function CrossPage() {
       />
 
       <div className="mx-auto max-w-[1280px] space-y-12 px-6 py-12 md:px-12">
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <CountdownRace targetHour={19} />
           <NormasButton mediaKey="norma-cross" />
         </div>
 
