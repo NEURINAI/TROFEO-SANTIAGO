@@ -12,15 +12,29 @@ function utcSecondsNow() {
 // Líbano está actualmente en UTC+2, por lo que 19:00 de Líbano = 17:00 UTC.
 // (No se usa la zona "Asia/Beirut" porque su base de datos calcula UTC+3, que no
 //  coincide con la hora real de Líbano.)
-export default function CountdownRace({ targetUtcHour = 17 }) {
+export default function CountdownRace({ targetUtcHour = 17, finished = false }) {
   const [remaining, setRemaining] = useState(null);
 
   useEffect(() => {
+    if (finished) return;
     const tick = () => setRemaining(targetUtcHour * 3600 - utcSecondsNow());
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [targetUtcHour]);
+  }, [targetUtcHour, finished]);
+
+  // Prueba terminada: bandera de meta.
+  if (finished) {
+    return (
+      <div className="inline-flex items-center gap-3 border-2 border-tertiary bg-tertiary/10 px-4 py-2">
+        <span className="material-symbols-outlined text-tertiary">sports_score</span>
+        <div className="leading-tight">
+          <div className="label-caps text-on-surface-variant">Cross · 5K</div>
+          <div className="data-mono text-2xl font-bold text-tertiary">META · FINALIZADA</div>
+        </div>
+      </div>
+    );
+  }
 
   const pad = (n) => String(n).padStart(2, "0");
   const started = remaining !== null && remaining <= 0;

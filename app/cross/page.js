@@ -46,7 +46,7 @@ export default async function CrossPage() {
 
       <div className="mx-auto max-w-[1280px] space-y-12 px-6 py-12 md:px-12">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <CountdownRace targetUtcHour={17} />
+          <CountdownRace finished />
           <NormasButton mediaKey="norma-cross" />
         </div>
 
