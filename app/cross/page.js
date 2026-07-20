@@ -13,27 +13,27 @@ export const metadata = {
 };
 
 export default async function CrossPage() {
-  const results = await prisma.crossResult.findMany({
-    include: { team: true },
-    orderBy: [{ points: "desc" }, { time: "asc" }],
-  });
+  const [results, teams] = await Promise.all([
+    prisma.crossResult.findMany({ orderBy: [{ puesto: "asc" }, { id: "asc" }] }),
+    prisma.crossTeamResult.findMany({ orderBy: [{ position: "asc" }, { points: "asc" }] }),
+  ]);
 
   const individual = results.map((r) => ({
     id: r.id,
+    puesto: r.puesto ?? "—",
+    empleo: r.empleo || "—",
     nombre: r.individualName || "—",
-    equipo: r.team?.name || "—",
+    dorsal: r.dorsal || "—",
+    unidad: r.unitName || "—",
     tiempo: r.time || "—",
-    puntos: r.points,
   }));
 
-  const teamMap = results.reduce((acc, r) => {
-    const name = r.team?.name || "—";
-    acc[name] = (acc[name] || 0) + r.points;
-    return acc;
-  }, {});
-  const teams = Object.entries(teamMap)
-    .map(([equipo, puntos], i) => ({ id: i, equipo, puntos }))
-    .sort((a, b) => b.puntos - a.puntos);
+  const teamRows = teams.map((t) => ({
+    id: t.id,
+    clasificacion: t.position ? `${t.position}º` : "—",
+    unidad: t.unitName,
+    puntos: t.points,
+  }));
 
   return (
     <div>
@@ -52,38 +52,41 @@ export default async function CrossPage() {
 
         <section>
           <div className="mb-4 flex items-center gap-3">
-            <span className="material-symbols-outlined text-tertiary">person</span>
-            <h2 className="font-display text-2xl font-bold text-on-surface">Clasificación Individual</h2>
+            <span className="material-symbols-outlined text-tertiary">groups</span>
+            <h2 className="font-display text-2xl font-bold text-on-surface">Clasificación por Equipos</h2>
           </div>
+          <p className="mb-4 text-sm text-on-surface-variant">
+            Puntuación por suma de puestos: <span className="text-tertiary">menor puntuación, mejor clasificación</span>.
+          </p>
           <ResultsTable
-            rankColumn
-            searchPlaceholder="Buscar corredor o equipo..."
+            searchPlaceholder="Buscar unidad..."
+            initialSort={{ key: "puntos", dir: "asc" }}
             columns={[
-              { key: "nombre", label: "Nombre" },
-              { key: "equipo", label: "Equipo" },
-              { key: "tiempo", label: "Tiempo", mono: true },
+              { key: "clasificacion", label: "Clasificación" },
+              { key: "unidad", label: "Unidad" },
               { key: "puntos", label: "Puntos", mono: true, align: "right" },
             ]}
-            rows={individual}
+            rows={teamRows}
           />
         </section>
 
         <section>
           <div className="mb-4 flex items-center gap-3">
-            <span className="material-symbols-outlined text-tertiary">groups</span>
-            <h2 className="font-display text-2xl font-bold text-on-surface">Clasificación por Equipos</h2>
+            <span className="material-symbols-outlined text-tertiary">person</span>
+            <h2 className="font-display text-2xl font-bold text-on-surface">Clasificación Individual</h2>
           </div>
-          <p className="mb-4 text-sm text-on-surface-variant">
-            Los puntos de equipo se suman automáticamente a la clasificación general.
-          </p>
           <ResultsTable
-            rankColumn
-            searchPlaceholder="Buscar equipo..."
+            searchPlaceholder="Buscar corredor, empleo o unidad..."
+            initialSort={{ key: "puesto", dir: "asc" }}
             columns={[
-              { key: "equipo", label: "Equipo" },
-              { key: "puntos", label: "Puntos en Cross", mono: true, align: "right" },
+              { key: "puesto", label: "Puesto", mono: true },
+              { key: "empleo", label: "Empleo" },
+              { key: "nombre", label: "Apellidos y Nombre" },
+              { key: "dorsal", label: "Dorsal", mono: true },
+              { key: "unidad", label: "Unidad" },
+              { key: "tiempo", label: "Tiempo", mono: true, align: "right" },
             ]}
-            rows={teams}
+            rows={individual}
           />
         </section>
       </div>

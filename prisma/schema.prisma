@@ -49,13 +49,26 @@ model Team {
 
 model CrossResult {
   id             Int      @id @default(autoincrement())
-  teamId         Int
-  team           Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId         Int?
+  team           Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  empleo         String? // Empleo/rango (SGTO, CBO, CAP...)
   individualName String?
+  puesto         Int? // Puesto en la carrera
   time           String?
+  dorsal         String?
+  unitName       String? // Unidad escrita a mano
   points         Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+// Clasificación por equipos del Cross (suma de puestos: menor gana)
+model CrossTeamResult {
+  id        Int      @id @default(autoincrement())
+  unitName  String
+  points    Int      @default(0)
+  position  Int      @default(0) // Clasificación (1 = campeón)
+  createdAt DateTime @default(now())
 }
 
 model VolleyMatch {
